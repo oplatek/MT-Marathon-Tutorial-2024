@@ -69,13 +69,27 @@ def divide_list_into_chunks(lst, chunk_size):
 
 def main():
     args = parse_arguments()
+
+    greedy_sampling_params = SamplingParams(
+        best_of=1,
+        temperature=0.0,
+        top_p=1,
+        top_k=-1,
+        use_beam_search=False,
+        presence_penalty=0,
+        frequency_penalty=0,
+        max_tokens=4096,
+        stop=["<|im_end|>", "\n"], 
+    )
     sampling_params = SamplingParams(
         use_beam_search=False,
         best_of=1,
         # Since we are doing sentence level we can stop at newlines. This avoids the model trying to continue
         # generating translations
         stop=["<|im_end|>", "\n"], 
-        min_p=0.02,
+
+        # min_p=0.02,  # epsilon sampling
+        top_p=0.95,  # nucleus sampling  - lot of candidates are the same
         temperature=1,
         max_tokens=4096,
     )
@@ -99,7 +113,7 @@ def main():
 
     print("Model inputs are built. Starting generate! This can take some time!")
     # Generate translations
-    outputs = llm.generate(model_inputs, sampling_params)
+    outputs = llm.generate(model_inputs, sampling_params)  # use greedy_sampling_params
     generations = [o.outputs[0].text for o in outputs]
     # Extract the directory from the output_file path
     output_directory = os.path.dirname(args.output_file)
